@@ -2,6 +2,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import YTSearch from 'youtube-api-search';
+import _ from 'lodash';
 
 import SearchBar from './components/search_bar';
 import VideoList from './components/video_list';
@@ -15,20 +16,35 @@ class App extends Component {
     constructor(props) {
         super(props);
 
-        this.state = { videos: [] };
+        //this is the initial state
+        this.state = { 
+            videos: [], 
+            selectedVideo: null 
+        };
 
-        YTSearch({key: API_KEY, term: 'surfboards'}, (videos) => {
-            this.setState({ videos }); // this.setState({ videos: videos });
+        this.videoSearch('surfboards');
+    }
+
+    videoSearch(term) {
+        YTSearch({key: API_KEY, term: term}, (videos) => {
+            this.setState({ 
+                videos: videos,
+                selectedVideo: videos[0] 
+            });
         });
     }
 
     // data passed from parent (App) to child (VideoList), its called props    
     render() {
-        return ( // videos in VideoLlist is props
+        const videoSearch = _.debounce((term) => {this.videoSearch(term)}, 300); // this function will be called only every 300 msec
+
+        return ( 
             <div>
-                <SearchBar />
-                <VideoDetail video={this.state.videos[0]} />
-                <VideoList videos={this.state.videos} />    
+                <SearchBar onSearchTermChange={videoSearch} />
+                <VideoDetail video={this.state.selectedVideo} />
+                <VideoList // these are props being past to VideoList:
+                    onVideoSelect={selectedVideo => this.setState({selectedVideo}) }
+                    videos={this.state.videos} />    
             </div>
         );
     }
